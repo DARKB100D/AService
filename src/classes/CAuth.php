@@ -1,17 +1,16 @@
 <?php
-
-
-set_include_path("/usr/local/www/auth.saas.cf/src/");
+set_include_path("/usr/local/www/auth.saas.cf/");
 include_once "vendor/autoload.php";
-include_once "modules/payload.php";
-include_once "modules/iAuth.php";
+include_once "src/classes/SPayload.php";
+include_once "src/interfaces/IAuth.php";
+
 use Lcobucci\JWT;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\ValidationData;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 
-class AService implements iAuth
+class AService implements IAuth
 {
 
 	private $config;
@@ -132,8 +131,6 @@ class AService implements iAuth
 								->sign($this->signer, $key)
 								->getToken();
 		if (!setcookie("aToken", $aToken, time()+60*60, "/", "dgsh.local", true, true)) return false;
-
-
 
 
 
