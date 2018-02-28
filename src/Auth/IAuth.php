@@ -1,5 +1,5 @@
 <?php
-	namespace AService\Interfaces;
+	namespace AService\Auth;
 	
 	interface iAuth {
 		public function __construct();

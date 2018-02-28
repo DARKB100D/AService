@@ -4,7 +4,7 @@ include_once "vendor/autoload.php";
 // include_once "src/classes/SPayload.php";
 // include_once "src/interfaces/IAuth.php";
 
-namespace AService;
+namespace AService\Auth;
 
 use Lcobucci\JWT;
 use Lcobucci\JWT\Builder;
@@ -12,7 +12,7 @@ use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\ValidationData;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 
-class AService implements IAuth
+class CAuth implements IAuth
 {
 
 	private $config;
@@ -112,10 +112,10 @@ class AService implements IAuth
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
-	private function config() {
-		$jsonStr = file_get_contents("/usr/local/www/contacts.dgsh.local/dev/src/modules/config.json");
-		return $config = json_decode($jsonStr, true);
-	}
+	// private function config() {
+	// 	$jsonStr = file_get_contents("/usr/local/www/contacts.dgsh.local/dev/src/modules/config.json");
+	// 	return $config = json_decode($jsonStr, true);
+	// }
 
 	private function setTokens(payload $payload){
 

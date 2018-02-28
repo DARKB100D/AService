@@ -1,5 +1,5 @@
 <?php 
-namespace AService\Classes;
+namespace AService\Log;
 
 /**
 * log to file 
@@ -7,11 +7,6 @@ namespace AService\Classes;
 
 class CLogToFile implements ILog
 {
-	
-	function __construct(argument)
-	{
-		# code...
-	}
 	
 	public function logExeption(Exception $e) {
 		logMessage($e->getMessage());

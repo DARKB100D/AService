@@ -1,6 +1,4 @@
 
-src/_AService/
-src/_functions/
 vendor/
-src/data/config.json
+src/Data/config.json
 tests/authTests.php

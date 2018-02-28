@@ -1,0 +1,3 @@
+<?php
+namespace AService\Database;
+?>

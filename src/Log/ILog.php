@@ -1,5 +1,5 @@
 <?php
-namespace AService\Interfaces;
+namespace AService\Log;
 
 /**
  *
