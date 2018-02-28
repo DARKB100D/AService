@@ -1,8 +1,10 @@
 <?php
 set_include_path("/usr/local/www/auth.saas.cf/");
 include_once "vendor/autoload.php";
-include_once "src/classes/SPayload.php";
-include_once "src/interfaces/IAuth.php";
+// include_once "src/classes/SPayload.php";
+// include_once "src/interfaces/IAuth.php";
+
+namespace AService;
 
 use Lcobucci\JWT;
 use Lcobucci\JWT\Builder;
