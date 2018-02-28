@@ -10,6 +10,11 @@
             "role": "Developer"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "AService\\":"src/"
+        }
+    },
     "require": {
         "php": ">=7.0.0",
         "colshrapnel/safemysql": "1.0.0",

@@ -1,6 +1,6 @@
 <?php
-set_include_path("/usr/local/www/auth.saas.cf/");
-include_once "vendor/autoload.php";
+// set_include_path("/usr/local/www/auth.saas.cf/");
+// include_once "vendor/autoload.php";
 // include_once "src/classes/SPayload.php";
 // include_once "src/interfaces/IAuth.php";
 
@@ -12,6 +12,10 @@ use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\ValidationData;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 
+use AService\Config\CConfigJSON;
+use AService\Database\CMySQL;
+
+
 class CAuth implements IAuth
 {
 
@@ -20,8 +24,8 @@ class CAuth implements IAuth
 	private $signer;
 
 	public function __construct() {
-		$this->config = $this->config();
-		$this->db = new SafeMysql($this->config['Base']);
+		$this->config = (new CConfigJSON())->getArray();
+		$this->db = new CMySQL;
 		$this->signer = new Sha256();
 	}
 
@@ -32,31 +36,31 @@ class CAuth implements IAuth
 			
 		} 
 
-		try {
-			if ($this->localdata($login, $pass)) return true;
-		} catch (Exception $e) {
+		// try {
+		// 	if ($this->localdata($login, $pass)) return true;
+		// } catch (Exception $e) {
 			
-		}
+		// }
 		return false;
 	}
 
-	private function localData($login, $pass) {
-		$data = $this->db->getRow("SELECT id, name, surname, middlename, password FROM users WHERE login=?s",$login);
+	// private function localData($login, $pass) {
+	// 	$data = $this->db->getRow("SELECT id, name, surname, middlename, password FROM users WHERE login=?s",$login);
 		
-		if ($data === NULL) return false;
+	// 	if ($data === NULL) return false;
 
-		if (!password_verify($pass, $data['password'])) return false;
+	// 	if (!password_verify($pass, $data['password'])) return false;
 
-		$payload = new payload();	
-		$payload->id = (int)$data['id'];
-		$payload->login = $login;
-		$payload->displayname = $data['surname']." ".$data['name']{0}.". ".$data['middlename']{0}.".";
-		$payload->admin = true;
+	// 	$payload = new payload();	
+	// 	$payload->id = (int)$data['id'];
+	// 	$payload->login = $login;
+	// 	$payload->displayname = $data['surname']." ".$data['name']{0}.". ".$data['middlename']{0}.".";
+	// 	$payload->admin = true;
 
-		if (!$this->setTokens($payload)) return false;
+	// 	if (!$this->setTokens($payload)) return false;
 
-		return true;
-	}
+	// 	return true;
+	// }
 
 	private function LDAPData($login, $pass){
 		if (!$this->config['AService']['useLDAP']) return false;
@@ -86,7 +90,7 @@ class CAuth implements IAuth
 		if (!$token->hasClaim("id")) return false;
 		$id = $token->getClaim("id");  
 
-		$data = $this->db->getRow("SELECT `sKey` FROM `tokens` WHERE `id` = ?i", $id);
+		$data = $this->db->getKey($id);////////////
 
 		if ($data === NULL) return false;
 		// var_dump($id);////////////////////
@@ -150,29 +154,29 @@ class CAuth implements IAuth
 
 		if (!setcookie("rToken", $rToken, time()+60*60*24*60, "/", "dgsh.local", true, true)) return false;
 
-		if (!$this->insertToDB($payload->id, $aToken, $rToken, $key)) return false;
+		if (!$this->db->insert($payload->id, $aToken, $rToken, $key)) return false;/////////
 
 		return true;
 
 	}
 
-	private function insertToDB($id, $aToken, $rToken, $key) {
-		// header("Refresh:0");
-		// echo "<pre>";
-		// echo $aToken;
-		// var_dump($id);///////////////
-		// var_dump($key);///////////////
-		// echo "</pre>";
-		$this->clearTokens($id);
+	// private function insertToDB($id, $aToken, $rToken, $key) {
+	// 	// header("Refresh:0");
+	// 	// echo "<pre>";
+	// 	// echo $aToken;
+	// 	// var_dump($id);///////////////
+	// 	// var_dump($key);///////////////
+	// 	// echo "</pre>";
+	// 	$this->clearTokens($id);
 
-		$data = array(
-			"id" => $id,
-			"aToken" => $aToken,
-			"rToken" => $rToken,
-			"sKey" => $key
-		);
-		return $this->db->query("INSERT INTO ?n SET ?u","tokens", $data);
-	}
+	// 	$data = array(
+	// 		"id" => $id,
+	// 		"aToken" => $aToken,
+	// 		"rToken" => $rToken,
+	// 		"sKey" => $key
+	// 	);
+	// 	return $this->db->query("INSERT INTO ?n SET ?u","tokens", $data);
+	// }
 
 	private function refreshTokens($rtoken) {
 
@@ -182,9 +186,9 @@ class CAuth implements IAuth
 	// 	return $this->empty;
 	// }
 
-	private function clearTokens($id) {
-		$this->db->query("DELETE FROM `tokens` WHERE `id`= ?i", $id);
-	}
+	// private function clearTokens($id) {
+	// 	$this->db->query("DELETE FROM `tokens` WHERE `id`= ?i", $id);
+	// }
 
 
 }

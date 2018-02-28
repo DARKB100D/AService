@@ -169,7 +169,7 @@
         },
         {
             "name": "illuminate/contracts",
-            "version": "v5.6.5",
+            "version": "v5.6.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/contracts.git",
@@ -213,16 +213,16 @@
         },
         {
             "name": "illuminate/support",
-            "version": "v5.6.5",
+            "version": "v5.6.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/support.git",
-                "reference": "ada40fd5fba4f51e456d38d8b17c826c519b33c7"
+                "reference": "c2dd9c94c4518fed1285b11e46eb381f81d916ee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/support/zipball/ada40fd5fba4f51e456d38d8b17c826c519b33c7",
-                "reference": "ada40fd5fba4f51e456d38d8b17c826c519b33c7",
+                "url": "https://api.github.com/repos/illuminate/support/zipball/c2dd9c94c4518fed1285b11e46eb381f81d916ee",
+                "reference": "c2dd9c94c4518fed1285b11e46eb381f81d916ee",
                 "shasum": ""
             },
             "require": {
@@ -266,7 +266,7 @@
             ],
             "description": "The Illuminate Support package.",
             "homepage": "https://laravel.com",
-            "time": "2018-02-22T15:02:07+00:00"
+            "time": "2018-02-26T14:00:30+00:00"
         },
         {
             "name": "lcobucci/jwt",
