@@ -3,6 +3,8 @@
 	/**
 	*  
 	*/
+	// include $_SERVER['DOCUMENT_ROOT']."/vendor/colshrapnel/safemysql/safemysql.class.php";
+	use SafeMysql;
 	class CMySQL implements IBase
 	{
 		private $db;

@@ -1,36 +1,44 @@
-<?php 
-include_once __DIR__."/../vendor/autoload.php";
-use AService\Auth\CAuth;
+<?php
+	namespace AService; 
+	
+	include_once __DIR__."/../vendor/autoload.php";
+	
+	use AService\Auth\CAuth;
+	use AService\Log\CLogToFile;
+	use Exception;
 
-switch ($_POST['action']) {
-	case 'auth':
-		if (isset($_POST['login']) && isset($_POST['password'])) {
-			
-			//фильтр
-			$login = $_POST['login'];
-			$password = $_POST['password'];
-			
-			$as = new CAuth();
-			$as->auth($login, $password);
-			//page exit or reload
-		}
-		else break;
+	switch ($_POST['action']) {
+		case 'auth':
+			if (isset($_POST['login']) && isset($_POST['password'])) {
+				//фильтр
+				//
+				//
+				$login = $_POST['login'];
+				$password = $_POST['password'];
+				
+				try {
+					$as = new CAuth();
+					$as->auth($login, $password);
+				} catch (Exception $e) {
+					(new CLogToFile)->logExeption($e);
+				}
+			}
+		case 'checkToken':
+			# code...
+				echo "Success. Regirect...";
+			break;
+		case 'checkPremissions':
+			# code...
+			break;
+		case 'logout':
+			# code...
+			break;
 
-	case 'checkToken':
-		# code...
-		break;
-	case 'checkPremissions':
-		# code...
-		break;
-	case 'logout':
-		# code...
-		break;
-
-	default:
-		# code...
-		# show page
-
+		default:
+			break;
+	}
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -75,7 +83,7 @@ switch ($_POST['action']) {
 									<button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored" name="submit">Войти</button>
 								</div>
 							</div>
-							<input type="text" name="action" hidden="true" value="auth"> <!------------->
+							<input type="text" name="action" hidden="true" value="auth"> <!--   -->
 						</form>
 					</div>
 					<div class="mdl-layout-spacer"></div>
@@ -88,6 +96,5 @@ switch ($_POST['action']) {
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 </html>
 <?php
-		break;
-}
+
 ?>

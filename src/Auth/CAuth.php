@@ -14,6 +14,9 @@ use Lcobucci\JWT\Signer\Hmac\Sha256;
 
 use AService\Config\CConfigJSON;
 use AService\Database\CMySQL;
+use AService\Log\CLogToFile;
+use AService\Payload\SPayload;
+use Exception;
 
 
 class CAuth implements IAuth
@@ -25,23 +28,24 @@ class CAuth implements IAuth
 
 	public function __construct() {
 		$this->config = (new CConfigJSON())->getArray();
-		$this->db = new CMySQL;
+		$this->db = new CMySQL($this->config['Base']);
 		$this->signer = new Sha256();
 	}
 
 	public function auth($login, $pass) {
-		try {
+		// try {
 			if($this->LDAPData($login, $pass)) return true;	
-		} catch (Exception $e) {
+		// } catch (Exception $e) {
 			
-		} 
+		// } 
 
 		// try {
 		// 	if ($this->localdata($login, $pass)) return true;
 		// } catch (Exception $e) {
 			
 		// }
-		return false;
+		throw new Exception("Неверное имя/пароль");
+		//throw new Exception('Деление на ноль.');
 	}
 
 	// private function localData($login, $pass) {
@@ -72,8 +76,8 @@ class CAuth implements IAuth
 		
 		$search = $provider->search();
 		$data = $search->findBy('sAMAccountName',$login, ['USNCreated', 'sAMAccountName', 'displayname', 'memberof']);
-		// var_dump($data);
-		$payload = new payload();
+
+		$payload = new SPayload();
 		$payload->id = (int)$data['usncreated'][0];
 		$payload->login = $login;
 		$payload->displayname = $data['displayname'][0];
@@ -90,11 +94,10 @@ class CAuth implements IAuth
 		if (!$token->hasClaim("id")) return false;
 		$id = $token->getClaim("id");  
 
-		$data = $this->db->getKey($id);////////////
+		$data = $this->db->getKey($id);
 
 		if ($data === NULL) return false;
-		// var_dump($id);////////////////////
-		// var_dump($data['sKey']);/////////////////////
+
 		if (!$token->verify($this->signer, $data['sKey'])) return false;
 		
 		$data = new ValidationData();
@@ -113,38 +116,30 @@ class CAuth implements IAuth
 
 	}
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-
-	// private function config() {
-	// 	$jsonStr = file_get_contents("/usr/local/www/contacts.dgsh.local/dev/src/modules/config.json");
-	// 	return $config = json_decode($jsonStr, true);
-	// }
-
-	private function setTokens(payload $payload){
+	private function setTokens(SPayload $payload){
 
 		$key = md5(random_bytes(32));
 
 		$aToken = (new Builder())->setIssuedAt(time())
 								->setNotBefore(time()+1)
 								->setExpiration(time()+60*60)
-								->setIssuer('auth.dgsh.local')
-								->setAudience('dgsh.local')
+								->setIssuer('auth'.$this->config['AService']['domain'])
+								->setAudience($this->config['AService']['domain'])
 								->set("id", $payload->id)
 								->set("login",$payload->login)
 								->set("displayname",$payload->displayname)
 								->set("admin",$payload->admin)
 								->sign($this->signer, $key)
 								->getToken();
-		if (!setcookie("aToken", $aToken, time()+60*60, "/", "dgsh.local", true, true)) return false;
+		if (!setcookie("aToken", $aToken, time()+60*60, "/", $this->config['AService']['domain'], true, true)) return false;
 
 
 
 		$rToken = (new Builder())->setIssuedAt(time())
 								->setNotBefore(time()+1)
 								->setExpiration(time()+60*60*24*60)
-								->setIssuer('auth.dgsh.local')
-								->setAudience('dgsh.local')
+								->setIssuer('auth'.$this->config['AService']['domain'])
+								->setAudience($this->config['AService']['domain'])
 								->set("id",$payload->id)
 								->set("login",$payload->login)
 								->set("displayname",$payload->displayname)
@@ -152,44 +147,17 @@ class CAuth implements IAuth
 								->sign($this->signer, $key)
 								->getToken();
 
-		if (!setcookie("rToken", $rToken, time()+60*60*24*60, "/", "dgsh.local", true, true)) return false;
+		if (!setcookie("rToken", $rToken, time()+60*60*24*60, "/", $this->config['AService']['domain'], true, true)) return false;
 
-		if (!$this->db->insert($payload->id, $aToken, $rToken, $key)) return false;/////////
+		if (!$this->db->insert($payload->id, $aToken, $rToken, $key)) return false;
 
 		return true;
 
 	}
 
-	// private function insertToDB($id, $aToken, $rToken, $key) {
-	// 	// header("Refresh:0");
-	// 	// echo "<pre>";
-	// 	// echo $aToken;
-	// 	// var_dump($id);///////////////
-	// 	// var_dump($key);///////////////
-	// 	// echo "</pre>";
-	// 	$this->clearTokens($id);
-
-	// 	$data = array(
-	// 		"id" => $id,
-	// 		"aToken" => $aToken,
-	// 		"rToken" => $rToken,
-	// 		"sKey" => $key
-	// 	);
-	// 	return $this->db->query("INSERT INTO ?n SET ?u","tokens", $data);
-	// }
-
 	private function refreshTokens($rtoken) {
 
 	}
-
-	// public function isEmpty() {
-	// 	return $this->empty;
-	// }
-
-	// private function clearTokens($id) {
-	// 	$this->db->query("DELETE FROM `tokens` WHERE `id`= ?i", $id);
-	// }
-
 
 }
 
