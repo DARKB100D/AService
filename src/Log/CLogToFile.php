@@ -14,7 +14,6 @@ class CLogToFile implements ILog
 	}
 
 	public function logMessage(string $str) {
-		// $str = "str";
 		$adr = $_SERVER['REMOTE_ADDR'];
 		ini_set('date.timezone', 'Europe/Moscow');
 		$date = date("Y-m-d H:i:s");

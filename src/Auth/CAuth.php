@@ -33,19 +33,13 @@ class CAuth implements IAuth
 	}
 
 	public function auth($login, $pass) {
-		// try {
-			if($this->LDAPData($login, $pass)) return true;	
-		// } catch (Exception $e) {
-			
-		// } 
-
-		// try {
-		// 	if ($this->localdata($login, $pass)) return true;
-		// } catch (Exception $e) {
-			
-		// }
-		throw new Exception("Неверное имя/пароль");
+		$payload = $this->LDAPData($login, $pass);
+		$this->setTokens($payload);
 		//throw new Exception('Деление на ноль.');
+		// $payload = LDAPData();
+		// setTokens();
+
+
 	}
 
 	// private function localData($login, $pass) {
@@ -67,15 +61,15 @@ class CAuth implements IAuth
 	// }
 
 	private function LDAPData($login, $pass){
-		if (!$this->config['AService']['useLDAP']) return false;
-		$ad = new \Adldap\Adldap();
+		// if (!$this->config['AService']['useLDAP']) return false;
+		$ad = new \Adldap\Adldap();					////////////
 		$ad->addProvider($this->config['LDAP']);
 		$provider = $ad->connect();
 
-		if (!$provider->auth()->attempt($login, $pass)) return false;
+		if (!$provider->auth()->attempt($login, $pass)) throw new Exception("Неверное имя/пароль");
 		
 		$search = $provider->search();
-		$data = $search->findBy('sAMAccountName',$login, ['USNCreated', 'sAMAccountName', 'displayname', 'memberof']);
+		$data = $search->findBy('sAMAccountName', $login, ['USNCreated', 'sAMAccountName', 'displayname', 'memberof']);
 
 		$payload = new SPayload();
 		$payload->id = (int)$data['usncreated'][0];
@@ -83,26 +77,48 @@ class CAuth implements IAuth
 		$payload->displayname = $data['displayname'][0];
 		$payload->admin = $data->inGroup('Операторы Сайта');
 
-		if (!$this->setTokens($payload)) return false;
+		return $payload;
+	}
+	private function LDAPDataFromId($id) {
+
+		$ad = new \Adldap\Adldap();					///getprovider	
+		$ad->addProvider($this->config['LDAP']);
+		$provider = $ad->connect();
+		
+		$search = $provider->search();
+		$data = $search->findBy('USNCreated', $id, ['USNCreated', 'sAMAccountName', 'displayname', 'memberof']);
+
+		$payload = new SPayload();
+		$payload->id = (int)$data['usncreated'][0];
+		$payload->login = $login;
+		$payload->displayname = $data['displayname'][0];
+		$payload->admin = $data->inGroup('Операторы Сайта');
+
+		return $payload;
+	}
+
+	public function сheckToken($str) {
+		$token = (new Parser())->parse((string) $str);
+		if (!verifyToken($token)); //throw new Exception("Token is not signed");
+		if (!validateToken($token)); //refreshTokens();
+	}
+
+	private function verifyToken($token) {
+		if (!$token->hasClaim("id")) return false;
+		$id = $token->getClaim("id");  
+
+		$key = $this->db->getKey($id);
+
+		if ($key === NULL) return false;
+
+		if (!$token->verify($this->signer, $key)) return false;
 
 		return true;
 	}
 
-	public function checkToken($str) {
-		$token = (new Parser())->parse((string) $str);
-
-		if (!$token->hasClaim("id")) return false;
-		$id = $token->getClaim("id");  
-
-		$data = $this->db->getKey($id);
-
-		if ($data === NULL) return false;
-
-		if (!$token->verify($this->signer, $data['sKey'])) return false;
-		
+	private function validateToken($token) {
 		$data = new ValidationData();
 		if (!$token->validate($data)) return false;
-
 		return true;
 	}
 
@@ -114,6 +130,9 @@ class CAuth implements IAuth
 
 	public function logout() {
 
+		$this->db->delete($id);
+		//claer cookies
+		//reload page
 	}
 
 	private function setTokens(SPayload $payload){
@@ -131,8 +150,8 @@ class CAuth implements IAuth
 								->set("admin",$payload->admin)
 								->sign($this->signer, $key)
 								->getToken();
-		if (!setcookie("aToken", $aToken, time()+60*60, "/", $this->config['AService']['domain'], true, true)) return false;
-
+		if (!setcookie("aToken", $aToken, time()+60*60, "/", $this->config['AService']['domain'], true, true)) throw new Exception("Куки не доступны для записи");
+		
 
 
 		$rToken = (new Builder())->setIssuedAt(time())
@@ -147,7 +166,7 @@ class CAuth implements IAuth
 								->sign($this->signer, $key)
 								->getToken();
 
-		if (!setcookie("rToken", $rToken, time()+60*60*24*60, "/", $this->config['AService']['domain'], true, true)) return false;
+		if (!setcookie("rToken", $rToken, time()+60*60*24*60, "/", $this->config['AService']['domain'], true, true)) throw new Exception("Куки не доступны для записи");
 
 		if (!$this->db->insert($payload->id, $aToken, $rToken, $key)) return false;
 
@@ -155,8 +174,13 @@ class CAuth implements IAuth
 
 	}
 
-	private function refreshTokens($rtoken) {
 
+	private function refreshTokens($str) {
+		$token = (new Parser())->parse((string) $str);
+		if (!$token->hasClaim("id")) ;
+		$id = $token->getClaim("id");
+		$payload = $this->LDAPDataFromId($id);
+		$this->setTokens($payload);
 	}
 
 }

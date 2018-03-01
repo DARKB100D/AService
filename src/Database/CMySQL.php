@@ -1,16 +1,20 @@
 <?php 
 	namespace AService\Database;
-	/**
-	*  
-	*/
-	// include $_SERVER['DOCUMENT_ROOT']."/vendor/colshrapnel/safemysql/safemysql.class.php";
 	use SafeMysql;
+	/**
+	*  Класс для работы с базой данных токенов
+	*/
+	
 	class CMySQL implements IBase
 	{
 		private $db;
 
 		public function __construct($config) {
 			$this->db = new SafeMysql($config);
+		}
+
+		public function __destruct(){
+			$this->db = NULL;
 		}
 
 		public function insert($id, $aToken, $rToken, $key) {
@@ -28,7 +32,8 @@
 		}
 		
 		public function getKey($id) {
-			return $this->db->getRow("SELECT `sKey` FROM `tokens` WHERE `id` = ?i", $id);
+			$data = $this->db->getRow("SELECT `sKey` FROM `tokens` WHERE `id` = ?i", $id);
+			return $data['sKey']; 
 		}
 		
 	}
