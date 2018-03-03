@@ -1,15 +1,15 @@
 <?php 
 namespace AService\Log;
+
+
 /**
 * log to file 
 */
-use Exception;
-
 class CLogToFile implements ILog
 {
 	private $file = __DIR__."/log";
 
-	public function logExeption(Exception $e) {
+	public function logExeption(\Exception $e) {
 		$this->logMessage($e->getMessage());
 	}
 

@@ -1,16 +1,17 @@
 <?php 
 	namespace AService\Database;
-	use SafeMysql;
+	// use SafeMysql;
+	
+
 	/**
 	*  Класс для работы с базой данных токенов
 	*/
-	
 	class CMySQL implements IBase
 	{
 		private $db;
 
 		public function __construct($config) {
-			$this->db = new SafeMysql($config);
+			$this->db = new \SafeMysql($config);
 		}
 
 		public function __destruct(){

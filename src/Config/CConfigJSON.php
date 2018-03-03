@@ -1,6 +1,8 @@
 <?php
 	namespace AService\Config;
-
+	/**
+	 * 
+	 */
 	Class CConfigJSON implements IConfig {
 		private $dir = __DIR__."/../Data/config.json";
 		

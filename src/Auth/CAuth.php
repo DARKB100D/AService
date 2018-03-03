@@ -16,6 +16,7 @@ use AService\Config\CConfigJSON;
 use AService\Database\CMySQL;
 use AService\Log\CLogToFile;
 use AService\Payload\SPayload;
+
 use Exception;
 
 
@@ -35,11 +36,6 @@ class CAuth implements IAuth
 	public function auth($login, $pass) {
 		$payload = $this->LDAPData($login, $pass);
 		$this->setTokens($payload);
-		//throw new Exception('Деление на ноль.');
-		// $payload = LDAPData();
-		// setTokens();
-
-
 	}
 
 	// private function localData($login, $pass) {
@@ -60,13 +56,13 @@ class CAuth implements IAuth
 	// 	return true;
 	// }
 
-	private function LDAPData($login, $pass){
+	private function LDAPData($login, $pass) {
 		// if (!$this->config['AService']['useLDAP']) return false;
 		$ad = new \Adldap\Adldap();					////////////
 		$ad->addProvider($this->config['LDAP']);
 		$provider = $ad->connect();
 
-		if (!$provider->auth()->attempt($login, $pass)) throw new Exception("Неверное имя/пароль");
+		if (!$provider->auth()->attempt($login, $pass)) throw new Exception("Неверное имя/пароль");//print except
 		
 		$search = $provider->search();
 		$data = $search->findBy('sAMAccountName', $login, ['USNCreated', 'sAMAccountName', 'displayname', 'memberof']);
@@ -75,10 +71,11 @@ class CAuth implements IAuth
 		$payload->id = (int)$data['usncreated'][0];
 		$payload->login = $login;
 		$payload->displayname = $data['displayname'][0];
-		$payload->admin = $data->inGroup('Операторы Сайта');
+		$payload->admin = $data->inGroup($this->config['AService']['group']);
 
 		return $payload;
 	}
+
 	private function LDAPDataFromId($id) {
 
 		$ad = new \Adldap\Adldap();					///getprovider	
@@ -97,10 +94,19 @@ class CAuth implements IAuth
 		return $payload;
 	}
 
-	public function сheckToken($str) {
-		$token = (new Parser())->parse((string) $str);
-		if (!verifyToken($token)); //throw new Exception("Token is not signed");
-		if (!validateToken($token)); //refreshTokens();
+	public function checkTokens($aStr, $rStr) {
+		$str = isset($astr) ? $aStr : $rStr;
+		if (!isset($str)) throw new Exception("Token in not set");
+		try {
+			$token = (new Parser())->parse((string) $str);
+			if (!$this->verifyToken($token)) throw new Exception("Token is not signed"); //not signed        //token error
+			if (!$this->validateToken($token)) throw new Exception("Token is not valid"); //not valid
+		} catch (Exception $e) {
+			$this->logout();
+		}
+
+		if ($str === $rStr) $this->refreshTokens($token);
+		return true;
 	}
 
 	private function verifyToken($token) {
@@ -124,15 +130,17 @@ class CAuth implements IAuth
 
 	public function checkAccess($str) {
 		$token = (new Parser())->parse((string) $str);
-		if(!$token->hasClaim('admin')) return false;
+		if(!$token->hasClaim('admin'));
 		return $token->getClaim('admin');
 	}
 
 	public function logout() {
-
 		$this->db->delete($id);
-		//claer cookies
-		//reload page
+		$this->unsetCookie();
+		// header("Refresh:0", "auth".$this->config['AService']['domain']."/src/");
+		header("HTTP/1.1 303 See Other");
+		header("Location: /index.php");
+		// echo "auth.".$this->config['AService']['domain']."/src/index.php";
 	}
 
 	private function setTokens(SPayload $payload){
@@ -174,14 +182,20 @@ class CAuth implements IAuth
 
 	}
 
-
-	private function refreshTokens($str) {
-		$token = (new Parser())->parse((string) $str);
-		if (!$token->hasClaim("id")) ;
+	private function refreshTokens($token) {
 		$id = $token->getClaim("id");
 		$payload = $this->LDAPDataFromId($id);
 		$this->setTokens($payload);
 	}
+
+	private function unsetCookie() {
+		setcookie("aToken", "", time()-3600,"/",$this->config['AService']['domain']);
+		setcookie("rToken", "", time()-3600,"/",$this->config['AService']['domain']);
+	}
+
+	// private function reloadPage() {
+	// 	header("Refresh:0");
+	// }
 
 }
 

@@ -1,10 +1,10 @@
 <?php
 	namespace AService\Auth;
 	
-	interface iAuth {
+	interface IAuth {
 		public function __construct();
 		public function auth($login, $pass);
-		public function checkToken($sToken);
+		public function checkTokens($aStr, $rStr);
 		public function checkAccess($sToken);
 		public function logout();
 	}
